@@ -23,7 +23,7 @@
   "license": "Apache 2.0",
   "main": "js/commonjs/index.js",
   "name": "inclined-plane",
-  "private": true,
+  "private": false,
   "readme": "README.md",
   "repository": {
     "type": "git",
@@ -36,5 +36,5 @@
     "start": "node js/commonjs/index.js"
   },
   "types": "js/commonjs/index.d.ts",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
