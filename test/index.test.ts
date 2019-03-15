@@ -10,6 +10,15 @@ import {ManyOneType, ManyTwoType} from "./ManyImpl.impl";
 import {NoImpls} from "./NoImpls";
 import {NonProvider} from "./NonProvider";
 import {Unbuildable} from "./Unbuildable";
+import {Late} from "./Late";
+import {LateBuilt, LateComplicated, LateProviderType} from "./Late.impl";
+import {
+  ConstructorCycleLeft,
+  PropertyCycleLeft,
+  PropertyCycleLeftType,
+  PropertyCycleRight,
+  PropertyCycleRightType
+} from "./Cycle";
 
 describe('inclined-plane', () => {
   beforeEach(() => {
@@ -17,6 +26,7 @@ describe('inclined-plane', () => {
     Complex.resetCachedImplementations();
     ManyImpl.resetCachedImplementations();
     NoImpls.resetCachedImplementations();
+    Late.resetCachedImplementations();
   });
 
   describe('buildInstance', () => {
@@ -33,6 +43,22 @@ describe('inclined-plane', () => {
     });
     it('throws when a type cannot be built due to dependency issues', () => {
       expect(() => buildInstance(Unbuildable)).throws(/Could not construct Unbuildable param NoImpls/);
+    });
+    it('injects late properties', () => {
+      const late = buildInstance(LateBuilt);
+      expect(late).is.instanceOf(LateBuilt);
+      expect(late.simple).is.instanceOf(SimpleImplType);
+      expect(late.noImpls).equals(undefined);
+      const manual = new LateBuilt();
+      expect(manual.simple).equals(undefined);  // when unmanaged
+    });
+    it('handles cases where injected properties already have defined descriptors', () => {
+      const complicated = buildInstance(LateComplicated);
+      expect(complicated).is.instanceOf(LateComplicated);
+      expect(complicated.simple).is.instanceOf(SimpleImplType);
+      expect(complicated.noImpls).equals(undefined);
+      const manual = new LateComplicated();
+      expect(manual.simple).equals(undefined);  // when unmanaged
     });
   });
 
@@ -60,6 +86,14 @@ describe('inclined-plane', () => {
       });
       it('throws when a more than one provider', () => {
         expect(() => ManyImpl.getInstance()).throws(/More than one implementation of ManyImpl: ManyOne, ManyTwo/);
+      });
+      it('injects late properties', () => {
+        const late = Late.getInstance();
+        expect(late).is.instanceOf(LateProviderType);
+        expect(late.simple).is.instanceOf(SimpleImplType);
+        expect(late.noImpls).equals(undefined);
+        const manual = new LateProviderType();
+        expect(manual.simple).equals(undefined);  // when unmanaged
       });
     });
     describe('getInstances', () => {
@@ -92,6 +126,20 @@ describe('inclined-plane', () => {
         expect(second).does.not.eq(null);
         expect(second).does.not.equal(first);
       });
+    });
+  });
+
+  describe('cycles', () => {
+    it('fails for constructor cycles', () => {
+      expect(() => ConstructorCycleLeft.getInstance()).throws(/Dependency cycle detected while trying to build ConstructorCycle/);
+    });
+    it('property cycles are supported', () => {
+      const left = PropertyCycleLeft.getInstance();
+      expect(left).is.instanceOf(PropertyCycleLeftType);
+      const right = PropertyCycleRight.getInstance();
+      expect(right).is.instanceOf(PropertyCycleRightType);
+      expect(left.right).equals(right);
+      expect(right.left).equals(left);
     });
   });
 });

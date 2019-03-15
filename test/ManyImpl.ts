@@ -1,6 +1,6 @@
-import {injectableType} from "../ts";
+import {testableType} from "../ts";
 
 export interface ManyImpl {
 }
 
-export const ManyImpl = injectableType<ManyImpl>('ManyImpl');
+export const ManyImpl = testableType<ManyImpl>('ManyImpl');

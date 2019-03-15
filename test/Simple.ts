@@ -1,6 +1,6 @@
-import {injectableType} from "../ts";
+import {testableType} from "../ts";
 
 export interface Simple {
 }
 
-export const Simple = injectableType<Simple>('SimpleTest');
+export const Simple = testableType<Simple>('SimpleTest');

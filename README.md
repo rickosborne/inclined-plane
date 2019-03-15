@@ -3,6 +3,14 @@ inclined-plane
 
 Yet another cheap and simple dependency injection library for TypeScript.
 
+## Installation
+
+Just like you'd expect:
+
+```bash
+npm install --save inclined-plane
+```
+
 ## Usage
 
 Define a perfectly normal interface.
@@ -84,6 +92,81 @@ import './path/to/ConsoleLogger';
 You don't need to do anything more—just import the file.
 Generally, this is easiest to do by defining a file like `services.ts` or `implementations.ts` that lists all injectable imports, then include that one file from your main/index.
 
+## Dependency Cycles
+
+Sometimes your type system will end up complex enough to have cycles:
+
+```typescript
+interface Left {
+  right: Right | undefined;
+}
+interface Right {
+  left: Left | undefined;
+}
+
+const Left = injectableType<Left>('Left');
+const Right = injectableType<Right>('Right');
+
+@Left.provider
+class LeftImpl implements Left {
+  constructor(@Right.required private readonly right?: Right) {}
+}
+
+@Right.provider
+class RightImpl implements Right {
+  constructor(@Left.required private readonly left?: Left) {}
+}
+
+```
+
+When attempting to build an instance you'll see a message like:
+
+> Dependency cycle detected while trying to build ...
+
+You can break these cycles by moving injected items from constructor parameters to properties with the `.inject` decorator:
+
+```typescript
+class LeftImpl {
+  @Right.inject private readonly right: Right | undefined;
+}
+class RightImpl {
+  @Left.inject private readonly left: Left | undefined;
+}
+```
+
+## Use `postConstruct` for delayed initialization
+
+Properties values injected via `.inject` are not available in the constructor:
+
+```typescript
+class LeftImpl {
+  @Right.inject private readonly right: Right | undefined;
+  
+  constructor() {
+    console.log(this.right);  // undefined
+  }
+}
+```
+
+Instead, you can define a `postConstruct()` method (see the `ManagedInstance` interface) to be called when all managed values have been injected:
+
+```typescript
+import {ManagedInstance} from 'inclined-plane';
+
+class LeftImpl implements ManagedInstance {
+  @Right.inject private readonly right: Right | undefined;
+  
+  protected postConstruct() {
+    console.log(this.right);  // not undefined
+  }
+}
+```
+
+Generally, you'll want to make this `protected` so it's not visible to other types, but you can still call it from subclasses for testing purposes.
+
+Note that `.inject` has the same semantics as `.optional` and **not** `.required`: it will silently allow an `undefined` value if no providers can be found for the type.
+Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
+
 ## Questions
 
  * **Can I inject implementations based on type parameters?**
@@ -97,7 +180,7 @@ Generally, this is easiest to do by defining a file like `services.ts` or `imple
 
    const Enclosure = injectableType<Enclosure<any>>('Enclosure');
 
-   class Widget {
+   class ZooBuilding {
      constructor(
        @Enclosure.require private readonly animalEnclosure: Enclosure<Animal>,
      ) {}
@@ -105,6 +188,20 @@ Generally, this is easiest to do by defining a file like `services.ts` or `imple
    ```
    
    There are no plans to support this any time soon, as the complete lack of runtime type info makes this painful if not impossible.
+
+## Release Notes
+
+* v0.2.0 2019-03-15
+
+  * Support `@Type.inject` for late property injection.
+    It would be nice to be able to reuse the existing decorators, but see [TypeScript issue 10777](https://github.com/Microsoft/TypeScript/issues/10777).
+  * Add detection of dependency cycles.
+  * Documentation for `postConstruct()`.
+  * A bunch of JSDoc for curious people.
+
+* v0.1.0 2019-03-14
+
+  * Initial release.
 
 ## License
 
