@@ -1,0 +1,40 @@
+{
+  "author": {
+    "name": "Rick Osborne",
+    "url": "https://rickosborne.org"
+  },
+  "dependencies": {},
+  "description": "Yet another cheap and simple dependency injection library for TypeScript",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2",
+    "nyc": "^13.3.0",
+    "ts-node": "^8.0.3",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.3333"
+  },
+  "homepage": "https://github.com/rickosborne/inclined-plane",
+  "keywords": [
+    "dependency injection",
+    "typescript"
+  ],
+  "license": "Apache 2.0",
+  "main": "js/commonjs/index.js",
+  "name": "inclined-plane",
+  "private": true,
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rickosborne/inclined-plane.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+    "test": "node $NODE_DEBUG_OPTION ./node_modules/.bin/mocha --require ts-node/register \"test/**/*.test.ts\"",
+    "start": "node js/commonjs/index.js"
+  },
+  "types": "js/commonjs/index.d.ts",
+  "version": "0.1.0"
+}
