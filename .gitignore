@@ -10,5 +10,4 @@ node_modules/
 # Generated source
 .idea/
 *.iml
-js/commonjs/test/
-js/commonjs/ts/
+js/

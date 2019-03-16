@@ -41,11 +41,12 @@ The type identifier can now be used to produce decorators:
 | Decorator | Target | Example | Intent |
 | --------- | ------ | ------- | ------ |
 | `.provider` | Class | <code>@Logger.provider<br>class LoggerImpl implements Logger {</code> | The decorated class is an implementation of the type. |
+| `.supplier` | Method | <code>class LoggerBuilder {<br>@Logger.supplier<br>static buildLogger(): Logger {</code> | The decorated method can be called to get instances of the type. |
 | `.required` | Param | <code>constructor(<br>@Logger.required private readonly logger: Logger<br>) {}</code> | A value of that type for the parameter is required. |
 | `.optional` | Param | (same as above) | A value of that type should be provided, or undefined if not available. |
 | `.inject` | Property | <code>class Whatever {<br>@Logger.inject private readonly logger?: Logger;</code> | A value of that type should be injected into that property. |
 
-### Implementations: `.provider`
+### Implementations: `.provider` and `.supplier`
 
 Given a normal service/bean/component which you **don't** need to export, identify it by decorating it:
 
@@ -56,6 +57,17 @@ import {Logger} from './path/to/Logger';
 class ConsoleLogger implements Logger {
   debug(message: string) {
     console.log(message);
+  }
+}
+```
+
+Alternatively, decorate a static method:
+
+```typescript
+class LoggerBuilder {
+  @Logger.supplier
+  public static buildLogger(): Logger {
+    return new ConsoleLogger();
   }
 }
 ```
@@ -204,6 +216,10 @@ Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
    There are no plans to support this any time soon, as the complete lack of runtime type info makes this painful if not impossible.
 
 ## Release Notes
+
+* v0.3.0 2019-03-16
+
+  * Support `.supplier` for static methods.
 
 * v0.2.2 2019-03-15
 

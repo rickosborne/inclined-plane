@@ -11,6 +11,7 @@ import {NoImpls} from "./NoImpls";
 import {NonProvider} from "./NonProvider";
 import {Unbuildable} from "./Unbuildable";
 import {Late} from "./Late";
+import {Supply, SupplyImplType} from "./Supply";
 import {LateBuilt, LateComplicated, LateProviderType} from "./Late.impl";
 import {Inheritance, InheritanceImpl} from "./Inheritance";
 import {
@@ -23,7 +24,7 @@ import {
 
 describe('inclined-plane', () => {
   beforeEach(() => {
-    [Simple, Complex, ManyImpl, NoImpls, Late, Inheritance]
+    [Simple, Complex, ManyImpl, NoImpls, Late, Inheritance, Supply]
       .forEach(type => type.resetCachedImplementations());
   });
 
@@ -83,7 +84,7 @@ describe('inclined-plane', () => {
         expect(() => NoImpls.getInstance()).throws(/No implementations known for NoImpls/);
       });
       it('throws when a more than one provider', () => {
-        expect(() => ManyImpl.getInstance()).throws(/More than one implementation of ManyImpl: ManyOne, ManyTwo/);
+        expect(() => ManyImpl.getInstance()).throws(/More than one source of ManyImpl: ManyOne, ManyTwo/);
       });
       it('injects late properties', () => {
         const late = Late.getInstance();
@@ -94,6 +95,15 @@ describe('inclined-plane', () => {
         expect(manual.simple).equals(undefined);  // when unmanaged
       });
     });
+
+    describe('supplier', () => {
+      it('works on static methods', () => {
+        const supplied = Supply.getInstance();
+        expect(supplied).is.instanceOf(SupplyImplType);
+        expect(supplied.simple).is.instanceOf(SimpleImplType);
+      });
+    });
+
     describe('getInstances', () => {
       it('finds all implementations', () => {
         const multi = ManyImpl.getInstances();
