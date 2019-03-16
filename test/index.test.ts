@@ -12,6 +12,7 @@ import {NonProvider} from "./NonProvider";
 import {Unbuildable} from "./Unbuildable";
 import {Late} from "./Late";
 import {LateBuilt, LateComplicated, LateProviderType} from "./Late.impl";
+import {Inheritance, InheritanceImpl} from "./Inheritance";
 import {
   ConstructorCycleLeft,
   PropertyCycleLeft,
@@ -22,11 +23,8 @@ import {
 
 describe('inclined-plane', () => {
   beforeEach(() => {
-    Simple.resetCachedImplementations();
-    Complex.resetCachedImplementations();
-    ManyImpl.resetCachedImplementations();
-    NoImpls.resetCachedImplementations();
-    Late.resetCachedImplementations();
+    [Simple, Complex, ManyImpl, NoImpls, Late, Inheritance]
+      .forEach(type => type.resetCachedImplementations());
   });
 
   describe('buildInstance', () => {
@@ -140,6 +138,13 @@ describe('inclined-plane', () => {
       expect(right).is.instanceOf(PropertyCycleRightType);
       expect(left.right).equals(right);
       expect(right.left).equals(left);
+    });
+  });
+
+  describe('inheritance', () => {
+    it('inject properties into parent classes', () => {
+      const built = buildInstance(InheritanceImpl);
+      expect(built.simple).is.instanceOf(SimpleImplType);
     });
   });
 });

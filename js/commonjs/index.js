@@ -35,11 +35,26 @@ var ServiceState;
  * @param target Concrete class constructor
  */
 function getOrCreateConstructorParams(target) {
-    var params = target[exports.constructorParamsKey] || [];
+    var params = target.hasOwnProperty(exports.constructorParamsKey) ? target[exports.constructorParamsKey] || [] : [];
     if (target[exports.constructorParamsKey] == null) {
         target[exports.constructorParamsKey] = params;
     }
     return params;
+}
+/**
+ * Store property injection metadata on the constructor.
+ * @param target Concrete class constructor
+ */
+function getProperties(target) {
+    var localProps = target.hasOwnProperty(exports.managedPropertiesKey) ? target[exports.managedPropertiesKey] || [] : [];
+    if (target[exports.managedPropertiesKey] == null) {
+        target[exports.managedPropertiesKey] = localProps;
+    }
+    var parentConstructor = Object.getPrototypeOf(target);
+    if (parentConstructor === Function.prototype) {
+        return localProps;
+    }
+    return localProps.concat.apply(localProps, getProperties(parentConstructor));
 }
 /**
  * Store property injection metadata on the constructor.
@@ -183,8 +198,13 @@ function injectProperty(target, prop) {
     if (value === undefined) {
         return;
     }
-    var descriptor = getPropertyDescriptor(target, prop.key) || {};
-    if (descriptor.set) {
+    var descriptor = getPropertyDescriptor(target, prop.key);
+    if (descriptor === undefined) {
+        Object.defineProperty(target, prop.key, {
+            value: value,
+        });
+    }
+    else if (descriptor.set) {
         descriptor.set.call(target, value);
     }
     else {
@@ -243,7 +263,7 @@ var InjectableType = /** @class */ (function () {
                 var ctor = target;
                 _this.implementations.push({
                     ctor: ctor,
-                    props: getOrCreateProperties(ctor),
+                    props: getProperties(ctor),
                     requires: getOrCreateConstructorParams(ctor),
                     state: ServiceState.Defined,
                 });
@@ -292,7 +312,10 @@ var InjectableType = /** @class */ (function () {
      * @see {TestableInterfaceType.resetCachedImplementations}
      */
     InjectableType.prototype.resetCachedImplementations = function () {
-        this.implementations.forEach(function (impl) { return impl.instance = undefined; });
+        this.implementations.forEach(function (impl) {
+            impl.instance = undefined;
+            impl.state = ServiceState.Defined;
+        });
     };
     /**
      * Cache of known interface types.
@@ -324,7 +347,7 @@ exports.testableType = testableType;
 function buildInstance(type) {
     return construct({
         ctor: type,
-        props: getOrCreateProperties(type),
+        props: getProperties(type),
         requires: getOrCreateConstructorParams(type),
         state: ServiceState.Defined,
     });

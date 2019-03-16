@@ -31,6 +31,11 @@ export interface Constructor<IMPL extends ManagedInstance> {
 }
 
 /**
+ * This is an upgraded {@link ClassDecorator} that will prevent adding {@link InterfaceType.provider} to the wrong type.
+ */
+export type TypedClassDecorator<IMPL> = (target: Constructor<IMPL>) => void;
+
+/**
  * The primary interaction type for most use-cases.
  * The {@code INTERFACE} type is an interface, versus a concrete class.
  * @see {injectableType}
@@ -48,7 +53,7 @@ export interface InterfaceType<INTERFACE> {
   /**
    * Decorate a class as a concrete implementation of this type.
    */
-  provider: ClassDecorator;
+  provider: TypedClassDecorator<INTERFACE>;
   /**
    * Decorate a constructor parameter as an injection target with this type.
    * When building an instance, an error will be thrown if a value cannot be found.
@@ -148,11 +153,27 @@ export interface SingletonDefinition<IMPL extends ManagedInstance> {
  * @param target Concrete class constructor
  */
 function getOrCreateConstructorParams<IMPL>(target: Constructor<IMPL>): ConstructorParam<any>[] {
-  const params = target[constructorParamsKey] || [];
+  const params = target.hasOwnProperty(constructorParamsKey) ? target[constructorParamsKey] || [] : [];
   if (target[constructorParamsKey] == null) {
     target[constructorParamsKey] = params;
   }
   return params;
+}
+
+/**
+ * Store property injection metadata on the constructor.
+ * @param target Concrete class constructor
+ */
+function getProperties<IMPL>(target: Constructor<IMPL>): ManagedProperty<any>[] {
+  const localProps = target.hasOwnProperty(managedPropertiesKey) ? target[managedPropertiesKey] || [] : [];
+  if (target[managedPropertiesKey] == null) {
+    target[managedPropertiesKey] = localProps;
+  }
+  const parentConstructor = Object.getPrototypeOf(target);
+  if (parentConstructor === Function.prototype) {
+    return localProps;
+  }
+  return localProps.concat(...getProperties(parentConstructor));
 }
 
 /**
@@ -309,8 +330,12 @@ function injectProperty<IMPL, PROP>(target: IMPL, prop: ManagedProperty<PROP>): 
   if (value === undefined) {
     return;
   }
-  const descriptor = getPropertyDescriptor(target, prop.key) || {};
-  if (descriptor.set) {
+  const descriptor = getPropertyDescriptor(target, prop.key);
+  if (descriptor === undefined) {
+    Object.defineProperty(target, prop.key, {
+      value: value,
+    });
+  } else if (descriptor.set) {
     descriptor.set.call(target, value);
   } else {
     descriptor.value = value;
@@ -356,7 +381,7 @@ class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFACE> {
       const ctor = <Constructor<IMPL>>target;
       this.implementations.push({
         ctor: ctor,
-        props: getOrCreateProperties<IMPL>(ctor),
+        props: getProperties<IMPL>(ctor),
         requires: getOrCreateConstructorParams<IMPL>(ctor),
         state: ServiceState.Defined,
       });
@@ -413,7 +438,10 @@ class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFACE> {
    * @see {TestableInterfaceType.resetCachedImplementations}
    */
   resetCachedImplementations(): void {
-    this.implementations.forEach(impl => impl.instance = undefined);
+    this.implementations.forEach(impl => {
+      impl.instance = undefined;
+      impl.state = ServiceState.Defined;
+    });
   }
 }
 
@@ -440,7 +468,7 @@ export function testableType<INTERFACE>(interfaceName: string): TestableInterfac
 export function buildInstance<IMPL>(type: Constructor<IMPL>): IMPL {
   return construct({
     ctor: type,
-    props: getOrCreateProperties<IMPL>(type),
+    props: getProperties<IMPL>(type),
     requires: getOrCreateConstructorParams<IMPL>(type),
     state: ServiceState.Defined,
   });

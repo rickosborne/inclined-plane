@@ -36,6 +36,17 @@ export const Logger = injectableType<Logger>('Logger');
 
 Yes, the syntax there is a little redundant because we need both compile- and run-time type information.
 
+The type identifier can now be used to produce decorators:
+
+| Decorator | Target | Example | Intent |
+| --------- | ------ | ------- | ------ |
+| `.provider` | Class | <code>@Logger.provider<br>class LoggerImpl implements Logger {</code> | The decorated class is an implementation of the type. |
+| `.required` | Param | <code>constructor(<br>@Logger.required private readonly logger: Logger<br>) {}</code> | A value of that type for the parameter is required. |
+| `.optional` | Param | (same as above) | A value of that type should be provided, or undefined if not available. |
+| `.inject` | Property | <code>class Whatever {<br>@Logger.inject private readonly logger?: Logger;</code> | A value of that type should be injected into that property. |
+
+### Implementations: `.provider`
+
 Given a normal service/bean/component which you **don't** need to export, identify it by decorating it:
 
 ```typescript
@@ -49,21 +60,8 @@ class ConsoleLogger implements Logger {
 }
 ```
 
-It can now be automagically instantiated and injected via constructor parameters:
-
-```typescript
-import {DatabaseAdapter} from './path/to/DatabaseAdapter';
-import {Logger} from './path/to/Logger';
-
-export class WidgetService {
-  constructor(
-    @DatabaseAdapter.require private readonly db: DatabaseAdapter,
-    @Logger.optional private readonly logger: Logger,
-  ) {}
-}
-```
-
-You can get a managed instance from the `InjectableType` instance or from the `buildInstance` function for unmanaged types:
+It can now be automagically instantiated and injected.
+You can get a managed instance from the `InjectableType` instance or from the `buildInstance` function for classes that aren't decorated as providers:
 
 ```typescript
 import {buildInstance} from 'inclined-plane';
@@ -82,7 +80,7 @@ const loggers = Logger.getInstances();
 
 Note that this will return an empty array if no providers have been loaded/imported.
 
-In your main/index, you'll want to ensure that you `import` all your injected services/beans/components.
+In your main/index, you'll want to ensure that you `import` all your injectable services/beans/components.
 Because they are not directly referenced, they won't be seen unless their files are imported!
 
 ```typescript
@@ -92,7 +90,23 @@ import './path/to/ConsoleLogger';
 You don't need to do anything more—just import the file.
 Generally, this is easiest to do by defining a file like `services.ts` or `implementations.ts` that lists all injectable imports, then include that one file from your main/index.
 
-## Dependency Cycles
+### Parameters: `.required` and `.optional`
+
+Constructor parameters can be decorated for injection:
+
+```typescript
+import {DatabaseAdapter} from './path/to/DatabaseAdapter';
+import {Logger} from './path/to/Logger';
+
+export class WidgetService {
+  constructor(
+    @DatabaseAdapter.require private readonly db: DatabaseAdapter,
+    @Logger.optional private readonly logger: Logger,
+  ) {}
+}
+```
+
+### Dependency Cycles and Properties: `.inject`
 
 Sometimes your type system will end up complex enough to have cycles:
 
@@ -190,6 +204,10 @@ Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
    There are no plans to support this any time soon, as the complete lack of runtime type info makes this painful if not impossible.
 
 ## Release Notes
+
+* v0.2.1 2019-03-15
+
+  * Cover the case where super classes need values injected. 
 
 * v0.2.0 2019-03-15
 

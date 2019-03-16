@@ -26,6 +26,10 @@ export interface Constructor<IMPL extends ManagedInstance> {
     new (...args: any[]): IMPL;
 }
 /**
+ * This is an upgraded {@link ClassDecorator} that will prevent adding {@link InterfaceType.provider} to the wrong type.
+ */
+export declare type TypedClassDecorator<IMPL> = (target: Constructor<IMPL>) => void;
+/**
  * The primary interaction type for most use-cases.
  * The {@code INTERFACE} type is an interface, versus a concrete class.
  * @see {injectableType}
@@ -43,7 +47,7 @@ export interface InterfaceType<INTERFACE> {
     /**
      * Decorate a class as a concrete implementation of this type.
      */
-    provider: ClassDecorator;
+    provider: TypedClassDecorator<INTERFACE>;
     /**
      * Decorate a constructor parameter as an injection target with this type.
      * When building an instance, an error will be thrown if a value cannot be found.
