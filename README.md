@@ -205,6 +205,10 @@ Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
 
 ## Release Notes
 
+* v0.2.2 2019-03-15
+
+  * Clean up .npmignore (no code changes)
+
 * v0.2.1 2019-03-15
 
   * Cover the case where super classes need values injected. 

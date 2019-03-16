@@ -2,3 +2,6 @@ ts/
 test/
 tsconfig.json
 tslint.json
+.idea/
+*.iml
+.nyc_output/
