@@ -1,6 +1,13 @@
 import {describe, it, beforeEach} from 'mocha';
 import {expect} from 'chai';
 import {buildInstance} from "../ts";
+import {TestableInterfaceType} from "../ts/decl";
+import {
+  CoreActions,
+  defaultInstanceResolver,
+  InjectableType,
+  InstanceResolver,
+} from "../ts/InjectableType";
 import {Complex} from "./Complex";
 import {Simple} from "./Simple";
 import {SimpleImplType} from "./Simple.impl";
@@ -21,6 +28,31 @@ import {
   PropertyCycleRight,
   PropertyCycleRightType
 } from "./Cycle";
+
+@InstanceResolver.implementation
+class TestableInstanceResolver implements InstanceResolver {
+  private static impls: [TestableInterfaceType<any>, any][] = [];
+
+  many<INTERFACE>(type: InjectableType<INTERFACE>, actions: CoreActions): INTERFACE[] {
+    return TestableInstanceResolver.impls.filter(pair => pair[0] === type).map(pair => pair[1]);
+  }
+
+  maybeOne<INTERFACE>(type: InjectableType<INTERFACE>, actions: CoreActions): INTERFACE | undefined {
+    for (const pair of TestableInstanceResolver.impls) {
+      if (pair[0] === type) return pair[1];
+    }
+    return undefined;
+  }
+
+  public static withType<INTERFACE>(type: TestableInterfaceType<INTERFACE>, impl: INTERFACE, block: () => void) {
+    try {
+      this.impls.push([type, impl]);
+      block();
+    } finally {
+      this.impls.pop();
+    }
+  }
+}
 
 describe('inclined-plane', () => {
   beforeEach(() => {
@@ -102,6 +134,11 @@ describe('inclined-plane', () => {
         expect(supplied).is.instanceOf(SupplyImplType);
         expect(supplied.simple).is.instanceOf(SimpleImplType);
       });
+      it('picks up the method name', () => {
+        const supplier = (<InjectableType<Supply>>Supply).suppliers[0];
+        expect(supplier.method).equals(SupplyImplType.buildSupply);
+        expect(supplier.name).equals('Supplied#buildSupply');
+      });
     });
 
     describe('getInstances', () => {
@@ -119,6 +156,12 @@ describe('inclined-plane', () => {
           [ManyOneType.name]: true,
           [ManyTwoType.name]: true,
         });
+      });
+      it('puts delayed instances later', () => {
+        expect(ManyImpl.getInstances().map(inst => inst.constructor)).to.deep.eq([
+          ManyTwoType,
+          ManyOneType
+        ]);
       });
       it('returns an empty array for no impls', () => {
         const multi = NoImpls.getInstances();
@@ -155,6 +198,27 @@ describe('inclined-plane', () => {
     it('inject properties into parent classes', () => {
       const built = buildInstance(InheritanceImpl);
       expect(built.simple).is.instanceOf(SimpleImplType);
+    });
+  });
+
+  describe('InstanceResolver', () => {
+    it('default is not null', () => {
+      expect(defaultInstanceResolver).does.not.eq(null);
+    });
+    it('picks up the testable implementation', () => {
+      const resolvers = InstanceResolver.getInstances();
+      expect(resolvers[0]).is.instanceOf(TestableInstanceResolver);
+      expect(resolvers[1]).equals(defaultInstanceResolver);
+    });
+    it('picks up injected types', () => {
+      class InjectedSimple implements Simple {}
+      const injectedSimple = new InjectedSimple();
+      TestableInstanceResolver.withType<Simple>(Simple, injectedSimple, () => {
+        const instances = Simple.getInstances();
+        expect(instances).deep.equals([injectedSimple]);
+      });
+      // And it resets
+      expect(Simple.getInstances().map(impl => impl.constructor)).deep.equals([SimpleImplType]);
     });
   });
 });

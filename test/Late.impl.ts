@@ -2,7 +2,7 @@ import {Late} from "./Late";
 import {Simple} from "./Simple";
 import {NoImpls} from "./NoImpls";
 
-@Late.provider
+@Late.implementation
 class LateProvider implements Late {
   @Simple.inject public readonly simple: Simple | undefined;
   @NoImpls.inject public readonly noImpls: NoImpls | undefined;

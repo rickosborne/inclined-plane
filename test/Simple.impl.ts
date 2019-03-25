@@ -1,6 +1,6 @@
 import {Simple} from "./Simple";
 
-@Simple.provider
+@Simple.implementation
 class SimpleImpl implements Simple {
 
 }

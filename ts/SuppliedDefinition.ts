@@ -9,8 +9,10 @@ export class SuppliedDefinition<INTERFACE> extends SourceDefinition<INTERFACE> {
   constructor(
     public readonly method: Method<INTERFACE>,
     public readonly thisArg: Constructor<any>,
+    public readonly propertyKey?: string | symbol,
+    delayed: boolean = false,
   ) {
-    super(`${thisArg.name}#${method.name}`);
+    super(`${thisArg.name}#${method.name != null ? method.name : propertyKey == null ? '?' : propertyKey.toString()}`, delayed);
   }
 
   /**

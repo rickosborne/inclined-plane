@@ -8,8 +8,9 @@ import {Constructor, ConstructorParam, ManagedInstance, ManagedProperty} from '.
 export class ConstructedDefinition<IMPL extends ManagedInstance> extends SourceDefinition<IMPL> {
   constructor(
     public readonly ctor: Constructor<IMPL>,
+    delayed: boolean = false,
   ) {
-    super(ctor.name);
+    super(ctor.name, delayed);
   }
 
   /**

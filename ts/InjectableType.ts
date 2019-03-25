@@ -1,10 +1,8 @@
 import {ConstructedDefinition} from './ConstructedDefinition';
-import {SuppliedDefinition} from './SuppliedDefinition';
-import {ServiceState} from './ServiceState';
 import {
   Constructor,
   ConstructorParam,
-  constructorParamsKey,
+  constructorParamsKey, Delayable,
   FunctionParam,
   ManagedInstance,
   ManagedItem,
@@ -14,7 +12,33 @@ import {
   methodParamsKey,
   TestableInterfaceType
 } from './decl';
+import {ServiceState} from './ServiceState';
 import {SourceDefinition} from './SourceDefinition';
+import {SuppliedDefinition} from './SuppliedDefinition';
+
+export interface CoreActions {
+  construct<INTERFACE, IMPL extends INTERFACE & ManagedInstance>(type: SourceDefinition<IMPL>): IMPL;
+}
+
+export interface InstanceResolver {
+  many<INTERFACE>(type: InjectableType<INTERFACE>, actions: CoreActions): INTERFACE[];
+
+  maybeOne<INTERFACE>(type: InjectableType<INTERFACE>, actions: CoreActions): INTERFACE | undefined;
+}
+
+// noinspection JSUnusedAssignment
+export let InstanceResolverType: InjectableType<InstanceResolver> | null = null;
+export let defaultInstanceResolver: InstanceResolver | null = null;
+
+export function setDefaultInstanceResolver(resolver: InstanceResolver): void {
+  defaultInstanceResolver = resolver;
+  InstanceResolver.implementations.forEach(impl => {
+    if (resolver instanceof impl.ctor) {
+      impl.instance = resolver;
+      impl.state = ServiceState.Built;
+    }
+  });
+}
 
 /**
  * Just a bunch of turility functions grouped to make automated code reorganization easier.
@@ -183,6 +207,19 @@ export class Util {
     }
   }
 
+  public static many<INTERFACE>(type: InjectableType<INTERFACE>): INTERFACE[] {
+    if (defaultInstanceResolver == null) {
+      throw new Error('Invalid configuration: no default instance resolver');
+    }
+    for (const resolver of defaultInstanceResolver.many(InstanceResolver, Util)) {
+      const maybeInstances = resolver.many(type, Util);
+      if (maybeInstances != null && maybeInstances.length > 0) {
+        return maybeInstances;
+      }
+    }
+    return [];
+  }
+
   /**
    * Return zero or one instances of the specified type.
    * @param type Interface
@@ -190,16 +227,16 @@ export class Util {
    * @throws {Error} If there are more than one source of a given type.
    */
   public static maybeOne<INTERFACE>(type: InjectableType<INTERFACE>): INTERFACE | undefined {
-    const sourceCount = type.sourceCount;
-    if (sourceCount === 0) {
-      return undefined;
-    } else if (sourceCount > 1) {
-      throw new Error(`More than one source of ${type.name}: ${type.sourceNames.join(', ')}`);
-    } else if (type.suppliers.length === 1) {
-      return Util.construct(type.suppliers[0]);
-    } else {
-      return Util.construct(type.implementations[0]);
+    if (defaultInstanceResolver == null) {
+      throw new Error('Invalid configuration: no default instance resolver');
     }
+    for (const resolver of defaultInstanceResolver.many(InstanceResolver, Util)) {
+      const maybeInstance = resolver.maybeOne(type, Util);
+      if (maybeInstance != null) {
+        return maybeInstance;
+      }
+    }
+    return undefined;
   }
 }
 
@@ -213,6 +250,21 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
    * @param name Interface name (why yes, it _would_ be nice if we could get this from the compiler)
    */
   private constructor(public readonly name: string) {
+  }
+
+  /**
+   * @see {InterfaceType.implementation}
+   */
+  public get implementation(): Delayable<ClassDecorator> {
+    const decorator = <IMPL extends INTERFACE & ManagedInstance>(delayed: boolean, target: Function): void => {
+      const ctor = <Constructor<IMPL>>target;
+      this.implementations.push(new ConstructedDefinition<INTERFACE>(ctor, delayed));
+    };
+    return Object.assign(decorator.bind(this, false), {
+      get delayed(): ClassDecorator {
+        return decorator.bind(this, true);
+      }
+    });
   }
 
   /**
@@ -232,27 +284,10 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
   }
 
   /**
-   * @see {InterfaceType.provider}
-   */
-  public get provider(): ClassDecorator {
-    return <IMPL extends INTERFACE & ManagedInstance>(target: Function): void => {
-      const ctor = <Constructor<IMPL>>target;
-      this.implementations.push(new ConstructedDefinition<INTERFACE>(ctor));
-    };
-  }
-
-  /**
    * @see {InterfaceType.required}
    */
   public get required(): ParameterDecorator {
     return this.paramDecorator(false);
-  }
-
-  /**
-   * Helper for determining if there are any sources for this type.
-   */
-  public get sourceCount(): number {
-    return this.suppliers.length + this.implementations.length;
   }
 
   /**
@@ -265,12 +300,17 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
   /**
    * @see {InterfaceType.supplier}
    */
-  public get supplier(): MethodDecorator {
-    return (target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): void => {
+  public get supplier(): Delayable<MethodDecorator> {
+    const decorator = (delayed: boolean, target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): void => {
       const method = <Method<INTERFACE>>(descriptor.value);
       const ctor = <Constructor<any>>target;
-      this.suppliers.push(new SuppliedDefinition<INTERFACE>(method, ctor));
+      this.suppliers.push(new SuppliedDefinition<INTERFACE>(method, ctor, propertyKey, delayed));
     };
+    return Object.assign(decorator.bind(this, false), {
+      get delayed(): MethodDecorator {
+        return decorator.bind(this, true);
+      }
+    });
   }
 
   /**
@@ -280,7 +320,7 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
   private static readonly types: { [key: string]: InjectableType<any> } = {};
 
   /**
-   * Used by {@link provider} to track implementation constructors.
+   * Used by {@link implementation} to track implementation constructors.
    */
   public readonly implementations: ConstructedDefinition<INTERFACE>[] = [];
   public readonly suppliers: SuppliedDefinition<INTERFACE>[] = [];
@@ -307,7 +347,7 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
    * @see {InterfaceType.getInstances}
    */
   getInstances(): INTERFACE[] {
-    return this.implementations.map(def => Util.construct(def));
+    return Util.many(this);
   }
 
   /**
@@ -403,3 +443,7 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
     });
   }
 }
+
+InstanceResolverType = InjectableType.named<InstanceResolver>('InstanceResolver');
+export const InstanceResolver = InstanceResolverType;
+import './DefaultInstanceResolver';

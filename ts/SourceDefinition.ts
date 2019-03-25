@@ -16,6 +16,7 @@ export abstract class SourceDefinition<INTERFACE> {
 
   protected constructor(
     public readonly name: string,
+    public readonly delayed: boolean = false,
   ) {
   }
 

@@ -3,7 +3,7 @@ import {Simple} from "./Simple";
 import {NoImpls} from "./NoImpls";
 import {Complex} from "./Complex";
 
-@Complex.provider
+@Complex.implementation
 class ComplexImpl implements Complex {
   constructor(
     @Simple.required public readonly simple: Simple,

@@ -36,5 +36,5 @@
     "start": "node js/commonjs/index.js"
   },
   "types": "js/commonjs/index.d.ts",
-  "version": "0.3.0"
+  "version": "0.4.0"
 }

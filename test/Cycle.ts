@@ -21,7 +21,7 @@ export const ConstructorCycleRight = injectableType<ConstructorCycleRight>('Cons
 export const PropertyCycleLeft = injectableType<PropertyCycleLeft>('PropertyCycleLeft');
 export const PropertyCycleRight = injectableType<PropertyCycleRight>('PropertyCycleRight');
 
-@ConstructorCycleLeft.provider
+@ConstructorCycleLeft.implementation
 class ConstructorCycleLeftProvider implements ConstructorCycleLeft {
   constructor(
     @ConstructorCycleRight.required public readonly right: ConstructorCycleRight
@@ -29,7 +29,7 @@ class ConstructorCycleLeftProvider implements ConstructorCycleLeft {
   }
 }
 
-@ConstructorCycleRight.provider
+@ConstructorCycleRight.implementation
 class ConstructorCycleRightProvider implements ConstructorCycleRight {
   constructor(
     @ConstructorCycleLeft.required public readonly left: ConstructorCycleLeft
@@ -37,12 +37,12 @@ class ConstructorCycleRightProvider implements ConstructorCycleRight {
   }
 }
 
-@PropertyCycleLeft.provider
+@PropertyCycleLeft.implementation
 class PropertyCycleLeftProvider implements PropertyCycleLeft {
   @PropertyCycleRight.inject public readonly right: PropertyCycleRight | undefined;
 }
 
-@PropertyCycleRight.provider
+@PropertyCycleRight.implementation
 class PropertyCycleRightProvider implements PropertyCycleRight {
   @PropertyCycleLeft.inject public readonly left: PropertyCycleLeft | undefined;
 }

@@ -43,7 +43,7 @@ export type Method<INTERFACE> =
   & Function;
 
 /**
- * This is an upgraded {@link ClassDecorator} that will prevent adding {@link InterfaceType.provider} to the wrong type.
+ * This is an upgraded {@link ClassDecorator} that will prevent adding {@link InterfaceType.implementation} to the wrong type.
  */
 export type TypedClassDecorator<IMPL> = (target: Constructor<IMPL>) => void;
 
@@ -52,6 +52,12 @@ export type TypedClassDecorator<IMPL> = (target: Constructor<IMPL>) => void;
  */
 export type TypedMethodDecorator<RETURN>
   = (target: Function, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<Method<RETURN>>) => void;
+
+/**
+ * Some decorators can mark an implementation as delayed, meaning low priority or default.
+ * Typically, this is used with Instance Resolvers.
+ */
+export type Delayable<T> = T & { delayed: T };
 
 /**
  * The primary interaction type for most use-cases.
@@ -71,7 +77,7 @@ export interface InterfaceType<INTERFACE> {
   /**
    * Decorate a class as a concrete implementation of this type.
    */
-  provider: TypedClassDecorator<INTERFACE>;
+  implementation: Delayable<TypedClassDecorator<INTERFACE>>;
   /**
    * Decorate a constructor parameter as an injection target with this type.
    * When building an instance, an error will be thrown if a value cannot be found.
@@ -80,7 +86,7 @@ export interface InterfaceType<INTERFACE> {
   /**
    * Decorate a (static) method as a source for this type.
    */
-  supplier: TypedMethodDecorator<INTERFACE>;
+  supplier: Delayable<TypedMethodDecorator<INTERFACE>>;
 
   /**
    * Get a singleton implementation for this interface.
