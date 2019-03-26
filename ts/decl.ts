@@ -53,6 +53,9 @@ export type TypedClassDecorator<IMPL> = (target: Constructor<IMPL>) => void;
 export type TypedMethodDecorator<RETURN>
   = (target: Function, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<Method<RETURN>>) => void;
 
+export type ClassMethodDecorator<RETURN>
+  = (target: {constructor: Function}, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<Method<RETURN>>) => void;
+
 /**
  * Some decorators can mark an implementation as delayed, meaning low priority or default.
  * Typically, this is used with Instance Resolvers.
@@ -65,6 +68,10 @@ export type Delayable<T> = T & { delayed: T };
  * @see {injectableType}
  */
 export interface InterfaceType<INTERFACE> {
+  /**
+   * Decorate an instance method as a source for this type.
+   */
+  accessor: Delayable<ClassMethodDecorator<INTERFACE>>;
   /**
    * Decorate a property as an injection target with this type.
    */

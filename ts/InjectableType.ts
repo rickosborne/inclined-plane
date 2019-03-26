@@ -1,5 +1,6 @@
 import {ConstructedDefinition} from './ConstructedDefinition';
 import {
+  ClassMethodDecorator,
   Constructor,
   ConstructorParam,
   constructorParamsKey, Delayable,
@@ -250,6 +251,28 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
    * @param name Interface name (why yes, it _would_ be nice if we could get this from the compiler)
    */
   private constructor(public readonly name: string) {
+  }
+
+  /**
+   * @see {InterfaceType.accessor}
+   */
+  public get accessor(): Delayable<ClassMethodDecorator<INTERFACE>> {
+    const decorator = <IMPL extends INTERFACE & ManagedInstance>(
+      delayed: boolean,
+      target: {constructor: Function, name?: string},
+      propertyKey: string | symbol
+    ): void => {
+      if (target.constructor === Function) {  // static
+        throw new Error(`Use .supplier instead of .accessor for static methods: ${target.name}.${propertyKey.toString()}`);
+      }
+      const ctor = <Constructor<IMPL>>target.constructor;
+      this.implementations.push(new ConstructedDefinition<INTERFACE>(ctor, delayed));
+    };
+    return Object.assign(decorator.bind(this, false), {
+      get delayed(): ClassMethodDecorator<INTERFACE> {
+        return decorator.bind(this, true);
+      }
+    });
   }
 
   /**

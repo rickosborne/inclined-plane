@@ -41,12 +41,13 @@ The type identifier can now be used to produce decorators:
 | Decorator | Target | Example | Intent |
 | --------- | ------ | ------- | ------ |
 | `.implementation` | Class | <code>@Logger.implementation<br>class LoggerImpl implements Logger {</code> | The decorated class is an implementation of the type. |
-| `.supplier` | Method | <code>class LoggerBuilder {<br>@Logger.supplier<br>static buildLogger(): Logger {</code> | The decorated method can be called to get instances of the type. |
+| `.accessor` | Method | <code>class LoggerBuilder {<br>@Logger.accessor<br>buildLogger(): Logger {</code> | The decorated instance method can be called to get instances of the type. |
+| `.supplier` | Method | <code>class LoggerBuilder {<br>@Logger.supplier<br>static buildLogger(): Logger {</code> | The decorated static method can be called to get instances of the type. |
 | `.required` | Param | <code>constructor(<br>@Logger.required private readonly logger: Logger<br>) {}</code> | A value of that type for the parameter is required. |
 | `.optional` | Param | (same as above) | A value of that type should be provided, or undefined if not available. |
 | `.inject` | Property | <code>class Whatever {<br>@Logger.inject private readonly logger?: Logger;</code> | A value of that type should be injected into that property. |
 
-### Implementations: `.implementation` and `.supplier`
+### Implementations: `.implementation`, `.supplier`, and `.accessor`
 
 Given a normal service/bean/component which you **don't** need to export, identify it by decorating it:
 
@@ -61,7 +62,18 @@ class ConsoleLogger implements Logger {
 }
 ```
 
-Alternatively, decorate a static method:
+Or decorate an instance method:
+
+```typescript
+class LoggerBuilder {
+  @Logger.accessor
+  public buildLogger(): Logger {
+    return new ConsoleLogger();
+  } 
+}
+```
+
+Or decorate a static method:
 
 ```typescript
 class LoggerBuilder {
@@ -216,6 +228,10 @@ Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
    There are no plans to support this any time soon, as the complete lack of runtime type info makes this painful if not impossible.
 
 ## Release Notes
+
+* v0.5.0 2019-03-25
+
+  * Added `.accessor` for instance methods.
 
 * v0.4.0 2019-03-25
 

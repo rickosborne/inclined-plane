@@ -8,6 +8,7 @@ import {
   InjectableType,
   InstanceResolver,
 } from "../ts/InjectableType";
+import {Accessed, AccessorImplType} from "./Accessor";
 import {Complex} from "./Complex";
 import {Simple} from "./Simple";
 import {SimpleImplType} from "./Simple.impl";
@@ -219,6 +220,13 @@ describe('inclined-plane', () => {
       });
       // And it resets
       expect(Simple.getInstances().map(impl => impl.constructor)).deep.equals([SimpleImplType]);
+    });
+  });
+
+  describe('accessor', () => {
+    it('transparently builds instances', () => {
+      const accessed = Accessed.getInstance();
+      expect(accessed).is.instanceOf(AccessorImplType);
     });
   });
 });
