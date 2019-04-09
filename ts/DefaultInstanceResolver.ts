@@ -14,16 +14,8 @@ export class DefaultInstanceResolver implements InstanceResolver {
    * @see InstanceResolver.many
    */
   public many<INTERFACE>(type: InjectableType<INTERFACE>, actions: CoreActions): INTERFACE[] {
-    const pairs: [INTERFACE, number][] = [];
-    type.suppliers.forEach(supplier => {
-      const instance = actions.construct(supplier);
-      pairs.push([instance, supplier.delayed ? 1 : 0]);
-    });
-    type.implementations.forEach(impl => {
-      const instance = actions.construct(impl);
-      pairs.push([instance, impl.delayed ? 1 : 0]);
-    });
-    return pairs
+    return type.sources
+      .map(source => [actions.construct(source), source.delayed ? 1 : 0] as [INTERFACE, number])
       .sort((a, b) => a[1] - b[1])
       .map(pair => pair[0]);
   }

@@ -9,10 +9,10 @@ export class SuppliedDefinition<INTERFACE> extends SourceDefinition<INTERFACE> {
   constructor(
     public readonly method: Method<INTERFACE>,
     public readonly thisArg: Constructor<any>,
-    public readonly propertyKey?: string | symbol,
-    delayed: boolean = false,
+    public readonly propertyKey: string | symbol | undefined,
+    delayed: boolean,
   ) {
-    super(`${thisArg.name}#${method.name != null ? method.name : propertyKey == null ? '?' : propertyKey.toString()}`, delayed);
+    super(SourceDefinition.formatMethodName(thisArg.name, '#', method.name, propertyKey), delayed);
   }
 
   /**

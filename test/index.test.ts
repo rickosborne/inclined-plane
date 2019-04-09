@@ -1,6 +1,6 @@
 import {describe, it, beforeEach} from 'mocha';
 import {expect} from 'chai';
-import {buildInstance} from "../ts";
+import {buildInstance, injectableType} from "../ts";
 import {TestableInterfaceType} from "../ts/decl";
 import {
   CoreActions,
@@ -8,7 +8,7 @@ import {
   InjectableType,
   InstanceResolver,
 } from "../ts/InjectableType";
-import {Accessed, AccessorImplType} from "./Accessor";
+import {Accessed, AccessedImplType} from "./Accessor";
 import {Complex} from "./Complex";
 import {Simple} from "./Simple";
 import {SimpleImplType} from "./Simple.impl";
@@ -226,7 +226,34 @@ describe('inclined-plane', () => {
   describe('accessor', () => {
     it('transparently builds instances', () => {
       const accessed = Accessed.getInstance();
-      expect(accessed).is.instanceOf(AccessorImplType);
+      expect(accessed).is.instanceOf(AccessedImplType);
+      expect(accessed.simple).is.instanceOf(SimpleImplType);
+    });
+    it('calls postConstruct', () => {
+      const accessed = Accessed.getInstance();
+      expect(accessed).is.instanceOf(AccessedImplType);
+      expect(accessed).to.haveOwnProperty('postConstructWasCalled').equals(true);
+    });
+    it('throws when added to a static method', () => {
+      try {
+        interface BadAccessed {
+          simple: Simple;
+        }
+
+        const BadAccessed = injectableType<BadAccessed>('BadAccessed');
+
+        // noinspection JSUnusedLocalSymbols
+        class IncorrectAccessor {
+          @BadAccessed.accessor
+          public static badDecorator(): BadAccessed {
+            throw new Error('Should never have been called');
+          }
+        }
+
+        expect.fail('Should have died at definition');
+      } catch (e) {
+        expect(e.message).matches(/Use .supplier instead of .accessor for static methods: IncorrectAccessor.badDecorator/);
+      }
     });
   });
 });

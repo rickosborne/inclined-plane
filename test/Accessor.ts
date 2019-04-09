@@ -1,4 +1,5 @@
 import {injectableType} from "../ts";
+import {ManagedInstance} from "../ts/decl";
 import {Simple} from "./Simple";
 
 export interface Accessed {
@@ -7,8 +8,14 @@ export interface Accessed {
 
 export const Accessed = injectableType<Accessed>('Accessed');
 
-class AccessedImpl implements Accessed {
+class AccessedImpl implements Accessed, ManagedInstance {
+  public postConstructWasCalled: boolean = false;
+
   constructor(public readonly simple: Simple) {
+  }
+
+  public postConstruct(): void {
+    this.postConstructWasCalled = true;
   }
 }
 
@@ -25,5 +32,5 @@ class AccessorImpl {
   }
 }
 
-export const AccessorImplType = AccessorImpl;
 
+export const AccessedImplType = AccessedImpl;

@@ -23,6 +23,23 @@
   "license": "Apache 2.0",
   "main": "js/commonjs/index.js",
   "name": "inclined-plane",
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.test.ts",
+      "**/dist",
+      "**/test/*"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text"
+    ],
+    "sourceMap": true
+  },
   "private": false,
   "readme": "README.md",
   "repository": {
@@ -31,10 +48,11 @@
   },
   "scripts": {
     "build": "tsc",
+    "coverage": "nyc mocha --require ts-node/register \"test/**/*.test.ts\"",
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "test": "node $NODE_DEBUG_OPTION ./node_modules/.bin/mocha --require ts-node/register \"test/**/*.test.ts\"",
     "start": "node js/commonjs/index.js"
   },
   "types": "js/commonjs/index.d.ts",
-  "version": "0.5.0"
+  "version": "0.5.1"
 }

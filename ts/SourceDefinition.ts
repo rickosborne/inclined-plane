@@ -5,6 +5,13 @@ import {ServiceState} from './ServiceState';
  * Base for definitions for class constructors and static suppliers.
  */
 export abstract class SourceDefinition<INTERFACE> {
+
+  protected constructor(
+    public readonly name: string,
+    public readonly delayed: boolean,
+  ) {
+  }
+
   /**
    * We lazily construct instances, so this starts undefined.
    */
@@ -13,11 +20,19 @@ export abstract class SourceDefinition<INTERFACE> {
    * For cycle detection, track the lifecycle of this singleton.
    */
   public state: ServiceState = ServiceState.Defined;
-
-  protected constructor(
-    public readonly name: string,
-    public readonly delayed: boolean = false,
-  ) {
+  protected static formatMethodName(
+    className: string,
+    delimiter: string,
+    methodName: string,
+    propertyKey: string | symbol | undefined
+  ): string {
+    if (methodName != null && methodName !== '') {
+      return `${className}${delimiter}${methodName}`;
+    } else if (propertyKey != null) {
+      return `${className}${delimiter}${propertyKey.toString()}`;
+    }
+    /* istanbul ignore next */
+    throw new Error(`Unable to resolve method name`);
   }
 
   /**

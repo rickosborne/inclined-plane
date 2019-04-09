@@ -56,6 +56,13 @@ export type TypedMethodDecorator<RETURN>
 export type ClassMethodDecorator<RETURN>
   = (target: {constructor: Function}, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<Method<RETURN>>) => void;
 
+// Currently, TS definitions for instance method decorators don't seem to make this possible.
+// export type InstanceMethodDecorator<IMPL, RETURN>
+//   = (target: {constructor: Constructor<IMPL>},
+//   propertyKey: string | symbol,
+//   descriptor: TypedPropertyDescriptor<Method<RETURN>>
+//   ) => void;
+
 /**
  * Some decorators can mark an implementation as delayed, meaning low priority or default.
  * Typically, this is used with Instance Resolvers.

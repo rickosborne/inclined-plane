@@ -1,3 +1,4 @@
+import {AccessedDefinition} from './AccessedDefinition';
 import {ConstructedDefinition} from './ConstructedDefinition';
 import {
   ClassMethodDecorator,
@@ -116,9 +117,12 @@ export class Util {
       return val;
     }
     if (create) {
+      /* istanbul ignore next */
       if (descriptor && typeof descriptor.set === 'function') {
+        /* istanbul ignore next */
         descriptor.set.call(target, defaultValue);
       } else if (descriptor) {
+        /* istanbul ignore next */
         descriptor.value = defaultValue;
       } else {
         Object.defineProperty(target, sym, {
@@ -178,6 +182,7 @@ export class Util {
       if (descriptor.value !== undefined) {
         return descriptor.value;
       }
+      /* istanbul ignore if */
       if (typeof descriptor.get === 'function') {
         return descriptor.get.call(target);
       }
@@ -209,6 +214,7 @@ export class Util {
   }
 
   public static many<INTERFACE>(type: InjectableType<INTERFACE>): INTERFACE[] {
+    /* istanbul ignore if */
     if (defaultInstanceResolver == null) {
       throw new Error('Invalid configuration: no default instance resolver');
     }
@@ -228,6 +234,7 @@ export class Util {
    * @throws {Error} If there are more than one source of a given type.
    */
   public static maybeOne<INTERFACE>(type: InjectableType<INTERFACE>): INTERFACE | undefined {
+    /* istanbul ignore if */
     if (defaultInstanceResolver == null) {
       throw new Error('Invalid configuration: no default instance resolver');
     }
@@ -247,26 +254,21 @@ export class Util {
 export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFACE> {
 
   /**
-   * Private to force usage of {@link named} static builder.
-   * @param name Interface name (why yes, it _would_ be nice if we could get this from the compiler)
-   */
-  private constructor(public readonly name: string) {
-  }
-
-  /**
    * @see {InterfaceType.accessor}
    */
   public get accessor(): Delayable<ClassMethodDecorator<INTERFACE>> {
-    const decorator = <IMPL extends INTERFACE & ManagedInstance>(
+    const decorator = <IMPL extends INTERFACE & ManagedInstance, PROXY extends ManagedInstance>(
       delayed: boolean,
-      target: {constructor: Function, name?: string},
-      propertyKey: string | symbol
+      target: { constructor: Function, name?: string },
+      propertyKey: string | symbol,
+      descriptor: TypedPropertyDescriptor<any>
     ): void => {
       if (target.constructor === Function) {  // static
         throw new Error(`Use .supplier instead of .accessor for static methods: ${target.name}.${propertyKey.toString()}`);
       }
-      const ctor = <Constructor<IMPL>>target.constructor;
-      this.implementations.push(new ConstructedDefinition<INTERFACE>(ctor, delayed));
+      const ctor = <Constructor<PROXY>>(target.constructor);
+      const method = <Method<INTERFACE>>(descriptor.value);
+      this.accessors.push(new AccessedDefinition<INTERFACE, PROXY>(ctor, method, propertyKey, delayed));
     };
     return Object.assign(decorator.bind(this, false), {
       get delayed(): ClassMethodDecorator<INTERFACE> {
@@ -317,7 +319,15 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
    * Helper for debugging sources for this type.
    */
   public get sourceNames(): string[] {
-    return this.suppliers.map(s => s.name).concat(this.implementations.map(i => i.name));
+    return this.sources.map(source => source.name);
+  }
+
+  public get sources(): SourceDefinition<INTERFACE>[] {
+    return ([] as SourceDefinition<INTERFACE>[])
+      .concat(this.accessors)
+      .concat(this.implementations)
+      .concat(this.suppliers)
+      ;
   }
 
   /**
@@ -337,6 +347,13 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
   }
 
   /**
+   * Private to force usage of {@link named} static builder.
+   * @param name Interface name (why yes, it _would_ be nice if we could get this from the compiler)
+   */
+  private constructor(public readonly name: string) {
+  }
+
+  /**
    * Cache of known interface types.
    * @see {named}
    */
@@ -345,6 +362,7 @@ export class InjectableType<INTERFACE> implements TestableInterfaceType<INTERFAC
   /**
    * Used by {@link implementation} to track implementation constructors.
    */
+  public readonly accessors: AccessedDefinition<INTERFACE, any>[] = [];
   public readonly implementations: ConstructedDefinition<INTERFACE>[] = [];
   public readonly suppliers: SuppliedDefinition<INTERFACE>[] = [];
 
