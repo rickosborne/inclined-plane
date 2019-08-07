@@ -78,29 +78,33 @@ export interface InterfaceType<INTERFACE> {
   /**
    * Decorate an instance method as a source for this type.
    */
-  accessor: Delayable<ClassMethodDecorator<INTERFACE>>;
+  readonly accessor: Delayable<ClassMethodDecorator<INTERFACE>>;
   /**
    * Decorate a property as an injection target with this type.
    */
-  inject: PropertyDecorator;
+  readonly inject: PropertyDecorator;
   /**
    * Decorate a constructor parameter as an injection target with this type.
    * When building an instance, the value will be set to undefined if it cannot be found.
    */
-  optional: ParameterDecorator;
+  readonly optional: ParameterDecorator;
   /**
    * Decorate a class as a concrete implementation of this type.
    */
-  implementation: Delayable<TypedClassDecorator<INTERFACE>>;
+  readonly implementation: Delayable<TypedClassDecorator<INTERFACE>>;
+  /**
+   * Simple name of the type.  May not be unique!
+   */
+  readonly name: string;
   /**
    * Decorate a constructor parameter as an injection target with this type.
    * When building an instance, an error will be thrown if a value cannot be found.
    */
-  required: ParameterDecorator;
+  readonly required: ParameterDecorator;
   /**
    * Decorate a (static) method as a source for this type.
    */
-  supplier: Delayable<TypedMethodDecorator<INTERFACE>>;
+  readonly supplier: Delayable<TypedMethodDecorator<INTERFACE>>;
 
   /**
    * Get a singleton implementation for this interface.

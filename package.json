@@ -51,8 +51,8 @@
     "coverage": "nyc mocha --require ts-node/register \"test/**/*.test.ts\"",
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "start": "node js/commonjs/index.js",
-    "test": "node $NODE_DEBUG_OPTION ./node_modules/.bin/mocha --require ts-node/register \"test/**/*.test.ts\""
+    "test": "mocha --require ts-node/register \"test/**/*.test.ts\""
   },
   "types": "js/commonjs/index.d.ts",
-  "version": "0.5.2"
+  "version": "0.5.3"
 }

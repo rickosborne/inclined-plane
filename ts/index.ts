@@ -1,6 +1,7 @@
 import {Util, InjectableType} from './InjectableType';
 import {ConstructedDefinition} from './ConstructedDefinition';
 import {Constructor, InterfaceType, TestableInterfaceType} from './decl';
+export {Constructor, InterfaceType, TestableInterfaceType} from './decl';
 
 /**
  * Find or generate a managed type definition for the given named interface.

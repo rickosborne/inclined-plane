@@ -229,6 +229,14 @@ Add a guard condition in `postConstruct()` to detect `undefined` if necessary.
 
 ## Release Notes
 
+* v0.5.3 2019-08-07
+
+  * Export a few additional interfaces which might be useful to code which wants to do reflection-like things.
+
+* v0.5.2 2019-07-28
+
+  * Dependency updates
+
 * v0.5.1 2019-04-09
 
   * Fixed the `.accessor` derp (you got an instance of the constructed proxy, not the desired interface implementation.)
