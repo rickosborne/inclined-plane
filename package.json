@@ -6,14 +6,17 @@
   "dependencies": {},
   "description": "Yet another cheap and simple dependency injection library for TypeScript",
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/mocha": "^5.2.7",
-    "chai": "^4.2.0",
-    "mocha": "^10.2.0",
-    "nyc": "^14.1.1",
-    "ts-node": "^8.3.0",
-    "tslint": "^5.18.0",
-    "typescript": "^3.5.3"
+    "@types/chai": "^4.3.14",
+    "@types/mocha": "^10.0.6",
+    "@typescript-eslint/parser": "^7.6.0",
+    "@typescript-eslint/eslint-plugin": "^7.6.0",
+    "eslint-plugin-json": "^3.1.0",
+    "chai": "^4.4.1 <5.0.0",
+    "eslint": "^8.57.0",
+    "mocha": "10.4.0",
+    "nyc": "^15.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   },
   "homepage": "https://github.com/rickosborne/inclined-plane",
   "keywords": [
@@ -22,6 +25,11 @@
   ],
   "license": "Apache-2.0",
   "main": "js/commonjs/index.js",
+  "mocha": {
+    "extension": ["ts"],
+    "require": "ts-node/register",
+    "spec": ["test/**/*.test.ts"]
+  },
   "name": "inclined-plane",
   "nyc": {
     "exclude": [
@@ -48,11 +56,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "coverage": "nyc mocha --require ts-node/register \"test/**/*.test.ts\"",
-    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+    "coverage": "nyc mocha",
+    "lint": "eslint --config .eslintrc.json --fix --ext .ts,.json .",
+    "prebuild": "npm run lint && rm -Rf ./js",
+    "reinstall": "rm -Rf ./node_modules && npm install",
     "start": "node js/commonjs/index.js",
-    "test": "mocha --require ts-node/register \"test/**/*.test.ts\""
+    "test": "mocha",
+    "upgrade": "npx npm-check-updates -u"
   },
   "types": "js/commonjs/index.d.ts",
-  "version": "0.5.3"
+  "version": "0.6.0"
 }

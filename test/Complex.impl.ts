@@ -5,11 +5,11 @@ import {Complex} from "./Complex";
 
 @Complex.implementation
 class ComplexImpl implements Complex {
-  constructor(
-    @Simple.required public readonly simple: Simple,
-    @NoImpls.optional public readonly noImpls?: NoImpls
-  ) {
-  }
+    constructor(
+        @Simple.required public readonly simple: Simple,
+        @NoImpls.optional public readonly noImpls?: NoImpls
+    ) {
+    }
 }
 
 /**

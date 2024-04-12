@@ -10,9 +10,9 @@ export const ManyOneType = ManyOne;
 
 @ManyImpl.implementation
 class ManyTwo implements ManyImpl {
-  constructor(
-    @Simple.required public readonly simple: Simple
-  ) {}
+    constructor(
+        @Simple.required public readonly simple: Simple
+    ) {}
 }
 
 export const ManyTwoType = ManyTwo;

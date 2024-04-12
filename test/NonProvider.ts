@@ -3,21 +3,21 @@ import {Complex} from "./Complex";
 import {NoImpls} from "./NoImpls";
 
 export class NonProvider {
-  constructor(
-    @Simple.required public readonly simple: Simple,
-    @Complex.required public readonly complex: Complex,
-    @NoImpls.optional public readonly optional?: NoImpls,
-  ) {
-  }
+    private _didPostConstruct = false;
 
-  private _didPostConstruct: boolean = false;
+    constructor(
+        @Simple.required public readonly simple: Simple,
+        @Complex.required public readonly complex: Complex,
+        @NoImpls.optional public readonly optional?: NoImpls,
+    ) {
+    }
 
-  get didPostConstruct(): boolean {
-    return this._didPostConstruct;
-  }
+    get didPostConstruct(): boolean {
+        return this._didPostConstruct;
+    }
 
-  // noinspection JSUnusedLocalSymbols
-  private postConstruct() {
-    this._didPostConstruct = true;
-  }
+    // noinspection JSUnusedLocalSymbols
+    private postConstruct() {
+        this._didPostConstruct = true;
+    }
 }

@@ -3,8 +3,8 @@ import {Simple} from "./Simple";
 import {testableType} from "../ts";
 
 export interface Complex {
-  noImpls?: NoImpls;
-  simple: Simple;
+    noImpls?: NoImpls;
+    simple: Simple;
 }
 
-export const Complex = testableType<Complex>('Complex');
+export const Complex = testableType<Complex>("Complex");
